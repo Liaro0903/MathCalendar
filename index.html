@@ -1,0 +1,869 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+  <script>
+    /**TIME VARIABLES**************************************/
+    var today = new Date();
+    var mm = parseInt(localStorage.getItem("lastMonth"));
+    var yyyy = parseInt(localStorage.getItem("lastYear"));
+    var lv = localStorage.getItem("lastViewed");
+    var plusNum = parseFloat(localStorage.getItem("plusNum"));
+    if (mm == null || Date.parse(today) - lv > 1800000 || yyyy == null || plusNum == null) {
+      plusNum = 0.000001;
+      localStorage.setItem("plusNum", plusNum);
+      todayButton();
+    }
+    var firstDay = new Date(yyyy, mm, 1);
+    var dw = firstDay.getDay();
+    var appendText = "";
+    /**ToolTip VARIABLES************************/
+    var value = 0.0;
+    /**MATH CALENDAR VARIABLES********************/
+    var day = 1;
+    var date = (mm + 1.0) + day / 100.0 + yyyy * 0.000001;
+    var display = "";
+
+
+    /**FUNCTION FOR CALENDAR STRUCTURE*****************************************/
+    function createTable() {
+      var tableElement = document.createElement("TABLE");
+      tableElement.setAttribute("id", "tableElement");
+      tableElement.setAttribute("border", "1");
+      tableElement.setAttribute("style", "width: 100%");
+      document.body.appendChild(tableElement);
+      /**CREATE CAPTION***********************************************************/
+      var captionElementText = "";
+      switch (mm) {
+        case 0: captionElementText = "January"; break;
+        case 1: captionElementText = "February"; break;
+        case 2: captionElementText = "March"; break;
+        case 3: captionElementText = "April"; break;
+        case 4: captionElementText = "May"; break;
+        case 5: captionElementText = "June"; break;
+        case 6: captionElementText = "July"; break;
+        case 7: captionElementText = "August"; break;
+        case 8: captionElementText = "September"; break;
+        case 9: captionElementText = "October"; break;
+        case 10: captionElementText = "November"; break;
+        case 11: captionElementText = "December"; break;
+      }
+      captionElementText = captionElementText + " " + yyyy.toString();
+      var captionElement = document.createElement("CAPTION");
+      appendText = document.createTextNode(captionElementText);
+      captionElement.appendChild(appendText);
+      captionElement.setAttribute("style", "font-size: 300%");
+      document.getElementById("tableElement").appendChild(captionElement);
+
+      /**CREATE ROWS OF DAY OF WEEK*********************************************/
+      var trElement = document.createElement("TR");
+      trElement.setAttribute("id", "trElement");
+      document.getElementById("tableElement").appendChild(trElement);
+      var trElementText = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      for (var i = 0; i <= 6; i++) {
+        var thElement = document.createElement("TH");
+        appendText = document.createTextNode(trElementText[i]);
+        thElement.setAttribute("style", "width: 14.28%");
+        thElement.appendChild(appendText);
+        document.getElementById("trElement").appendChild(thElement);
+      }
+
+      /**CREATE ROWS*************************************************************/
+      //Calculate number of weeks
+      var numOfWeeks = 5;
+      var getDaysInMonth = function (month, year) {
+        return new Date(year, month, 0).getDate();
+      }
+      if (dw == 0 && getDaysInMonth(mm + 1, yyyy) == 28) {	//Look at February 2015
+        numOfWeeks = 4;
+      }
+      if (dw == 6 && getDaysInMonth(mm + 1, yyyy) > 29) {		//Look at October 2016
+        numOfWeeks = 6;
+      }
+      if (dw == 5 && getDaysInMonth(mm + 1, yyyy) > 30) {		//Look at July 2016
+        numOfWeeks = 6;
+      }
+
+
+      //Create the rows and columns
+      for (var i = 1; i <= numOfWeeks; i++) {	//Create numOfWeeks rows
+        trElement = document.createElement("TR");
+        trElement.setAttribute("id", "trElement" + i.toString());
+        document.getElementById("tableElement").appendChild(trElement);
+        for (var o = 0; o <= 6; o++) {	//Create 7 columns or exceptions
+          if (i == 1) {		//The first week
+            if (o >= dw) {	//If after the start date
+              displayMathCal(true, "trElement" + i.toString());
+            } else {		//If before the start date
+              displayMathCal(false, "trElement" + i.toString());
+            }
+          } else {
+            if (i == numOfWeeks) {	//The last week
+              if (day <= getDaysInMonth(mm + 1, yyyy)) {	//If before the last day
+                displayMathCal(true, "trElement" + i.toString());
+              } else {		//If after the last day
+                displayMathCal(false, "trElement" + i.toString());
+              }
+            } else {	//Other weeks
+              displayMathCal(true, "trElement" + i.toString());
+            }
+          }
+        }
+      }
+    }
+    function displayMathCal(b, trElementId) {
+      if (b == true) {
+        var tdElement = document.createElement("TD");
+        appendText = document.createTextNode(day);
+        tdElement.appendChild(appendText);
+        var pElement = document.createElement("P");
+        fraccal();
+        appendText = document.createTextNode(display);
+        pElement.setAttribute("style", "float:right");
+        pElement.setAttribute("onmouseover", "mouseover(this)");
+        pElement.setAttribute("onmouseout", "mouseout()");
+        pElement.appendChild(appendText);
+        tdElement.appendChild(pElement);
+        for (var i = 0; i < 3; i++) {
+          pElement = document.createElement("P");
+          switch (i) {
+            case 0: sincal(true); break;
+            case 1: sincal(false); break;
+            case 2: tancal(); break;
+          }
+          appendText = document.createTextNode(display);
+          pElement.setAttribute("style", "text-align: center");
+          pElement.setAttribute("onmouseover", "mouseover(this)");
+          pElement.setAttribute("onmouseout", "mouseout()");
+          if (i == 0) {
+            var brElement = document.createElement("BR");
+            pElement.appendChild(brElement);
+          }
+          pElement.appendChild(appendText);
+          tdElement.appendChild(pElement);
+        }
+        for (var i = 0; i < 2; i++) {
+          var divElement = document.createElement("DIV");
+          var divElement2 = document.createElement("DIV");
+          var labelElement = document.createElement("LABEL");
+          divElement.setAttribute("class", "container");
+          divElement2.setAttribute("class", "label-info");
+          divElement2.setAttribute("onmouseover", "mouseover(this)");
+          divElement2.setAttribute("onmouseout", "mouseout()");
+          labelElement.setAttribute("onmouseover", "mouseover(this)");
+          labelElement.setAttribute("onmouseout", "mouseout()");
+          var display2 = "";
+          switch (i) {
+            case 0: ecal(); display2 = display; logcal(); break;
+            case 1: lncal(); display2 = display; nthrootcal(); break;
+          }
+          appendText = document.createTextNode(display2);
+          divElement2.appendChild(appendText);
+          appendText = document.createTextNode(display);
+          labelElement.appendChild(appendText);
+          divElement.appendChild(divElement2);
+          divElement.appendChild(labelElement);
+          tdElement.appendChild(divElement);
+        }
+        document.getElementById(trElementId).appendChild(tdElement);
+        day++;
+      } else {
+        var tdElement = document.createElement("TD");
+        appendText = document.createTextNode("");
+        tdElement.appendChild(appendText);
+        document.getElementById(trElementId).appendChild(tdElement);
+      }
+    }
+    /**BUTTON FUNCTIONS********************************************************************/
+    function nextMonth() {
+      mm += 1;
+      if (mm == 12) {
+        mm = 0;
+        yyyy += 1;
+      }
+      localStorage.setItem("lastMonth", mm);
+      localStorage.setItem("lastYear", yyyy);
+      location.reload();
+    }
+
+    function lastMonth() {
+      mm -= 1;
+      if (mm == -1) {
+        mm = 11;
+        yyyy -= 1;
+      }
+      localStorage.setItem("lastMonth", mm);
+      localStorage.setItem("lastYear", yyyy);
+      location.reload();
+    }
+
+    function todayButton() {
+      mm = today.getMonth();
+      localStorage.setItem("lastMonth", mm);
+      yyyy = today.getFullYear();
+      localStorage.setItem("lastYear", yyyy);
+      localStorage.setItem("lastViewed", Date.parse(today));
+      location.reload();
+    }
+
+    function visNMBtn() {	//Visibility of next month button
+      if (yyyy == 9999 && mm == 11) {
+        var containerElement = document.getElementById("container");
+        var newBlankDiv = document.createElement("div");
+        newBlankDiv.setAttribute("style", "float:right; width: 60px; height: 30px");
+        containerElement.appendChild(newBlankDiv);
+      } else {
+        var containerElement = document.getElementById("container");
+        var NMBtnElement = document.createElement("button");
+        NMBtnElement.setAttribute("onclick", "nextMonth()");
+        NMBtnElement.setAttribute("style", "float:right; width: 60px; height: 30px");
+        appendText = document.createTextNode("Next Month");
+        NMBtnElement.appendChild(appendText);
+        containerElement.appendChild(NMBtnElement);
+      }
+    }
+
+    function visLMBtn() {	//Visiblity of last month button
+      if (yyyy == 1753 && mm == 0) {
+        var labelElement = document.getElementById("label");
+        var newBlankDiv = document.createElement("div");
+        newBlankDiv.setAttribute("style", "width: 60px; height: 30px");
+        labelElement.appendChild(newBlankDiv);
+      } else {
+        var labelElement = document.getElementById("label");
+        var LMBtnElement = document.createElement("button");
+        LMBtnElement.setAttribute("onclick", "lastMonth()");
+        LMBtnElement.setAttribute("style", "width: 60px; height: 30px");
+        appendText = document.createTextNode("Last Month");
+        LMBtnElement.appendChild(appendText);
+        labelElement.appendChild(LMBtnElement);
+      }
+    }
+
+    function visNLBtn() {
+      if (yyyy == 9999) {	//Hide Next Month Button
+        var NMBtnElement = document.getElementById("NextMonthBtn");
+        var newBlankDiv = document.createElement("div");
+        newBlankDiv.id = "NextMonthBtn";	//Reason for naming "NextMonthBtn" is because for to return NextMonthBtn when yyyy != 9999 anymore.
+        newBlankDiv.setAttribute("style", "float:right; width: 60px; height: 30px;");
+        var NMBtnElementParent = NMBtnElement.parentNode;
+        NMBtnElementParent.replaceChild(newBlankDiv, NMBtnElement);
+      } else {
+        if (yyyy == 1753) {
+          var LMBtnElement = document.getElementById("LastMonthBtn");
+          var newBlankDiv = document.createElement("div");
+          newBlankDiv.id = "LastMonthBtn"; //Same reason for above NextMonthBtn
+          newBlankDiv.setAttribute("style", "float:right; width: 60px; height: 30px");
+          var LMBtnElementParent = LMBtnElement.parentNode;
+          LMBtnElementParent.replaceChild(newBlankDiv, LMBtnElement);
+        } else {
+          var NMBlorBtDivElement = document.getElementById("NextMonthBtn");
+          var LMBlorBtDivElement = document.getElementById("LastMonthBtn");
+
+        }
+      }
+    }
+
+    function fastTravel() {
+      var selectElement = document.getElementById("monthMenu");
+      var monthInput = selectElement.options[selectElement.selectedIndex].text;
+      selectElement = document.getElementById("yearMenu");
+      yyyy = parseInt(selectElement.options[selectElement.selectedIndex].text, 10);
+      switch (monthInput) {
+        case "January": mm = 0; break;
+        case "February": mm = 1; break;
+        case "March": mm = 2; break;
+        case "April": mm = 3; break;
+        case "May": mm = 4; break;
+        case "June": mm = 5; break;
+        case "July": mm = 6; break;
+        case "August": mm = 7; break;
+        case "September": mm = 8; break;
+        case "October": mm = 9; break;
+        case "November": mm = 10; break;
+        case "December": mm = 11; break;
+      }
+      localStorage.setItem("lastMonth", mm);
+      localStorage.setItem("lastYear", yyyy);
+      location.reload();
+    }
+
+    function makeMenuYear() {
+      for (var i = 1753; i <= 9999; i++) {
+        var menuYearOption = document.createElement("OPTION");
+        var t = document.createTextNode(i);
+        menuYearOption.appendChild(t);
+        var select = document.getElementById("yearMenu");
+        if (i == yyyy) {
+          menuYearOption.setAttribute("selected", "selected");
+        }
+        select.appendChild(menuYearOption);
+      }
+      select = document.getElementById(mm + 1);
+      select.setAttribute("selected", "selected");
+    }
+
+    function formatSelected(form) {
+      var format = form.value;
+      var formatLength = format.length;
+      console.log("format: " + format + " formatLength: " + formatLength);
+      switch (formatLength) {
+        case 9:  //mm.ddyyyy
+          localStorage.setItem("plusNum", 0.000001);
+          break;
+        case 5:  //mm.dd 
+          localStorage.setItem("plusNum", 0.01);
+          break;
+        case 7:  //mm.ddyy
+          localStorage.setItem("plusNum", 0.0001);
+          break;
+      }
+      location.reload();
+    }
+
+    function selectFormat() {
+      switch (plusNum) {
+        case 0.000001:  //mm.ddyyyy
+          var select = document.getElementById("mm.ddyyyy");
+          select.setAttribute("selected", "selected");
+          break;
+        case 0.01:  //mm.dd 
+          var select = document.getElementById("mm.dd");
+          select.setAttribute("selected", "selected");
+          break;
+        case 0.0001:  //mm.ddyy
+          document.getElementById("mm.ddyy").setAttribute("selected", "selected");
+          break;
+      }
+    }
+
+
+    /**MOUSEOVER AND OUT FUNCTIONS********************************************************************/
+    function mouseover(mouseOnDiv) {
+      var textContent = mouseOnDiv.textContent;
+      if (textContent.indexOf("frac") != -1) {
+        var numerator = parseInt(textContent.substring(textContent.indexOf("frac") + 5, textContent.indexOf("}")));
+        var denominator = parseInt(textContent.substring(textContent.indexOf("}{") + 2, textContent.length - 1));
+        value = "=" + numerator / denominator;
+      }
+      if (textContent.indexOf("sin") != -1) {
+        var coefficient = parseInt(textContent.substring(0, textContent.indexOf("s")));
+        var theta = sin(parseFloat(textContent.substring(textContent.indexOf("(") + 1, textContent.indexOf(")"))));
+        value = "=" + myNameSpace.round(coefficient * theta, 8);
+      }
+      if (textContent.indexOf("cos") != -1) {
+        var coefficient = parseInt(textContent.substring(0, textContent.indexOf("c")));
+        var theta = sin(90.0 - parseFloat(textContent.substring(textContent.indexOf("(") + 1, textContent.indexOf(")"))));
+        value = "=" + myNameSpace.round(coefficient * theta, 8);
+      }
+      if (textContent.indexOf("tan") != -1) {
+        var coefficient = parseInt(textContent.substring(0, textContent.indexOf("t")));
+        var theta = tan(parseFloat(textContent.substring(textContent.indexOf("(") + 1, textContent.indexOf(")"))));
+        value = "=" + myNameSpace.round(coefficient * theta, 8);
+      }
+      if (textContent.indexOf("log") != -1) {
+        var b = parseInt(textContent.substring(textContent.indexOf("log") + 3, textContent.indexOf("(")));
+        var y = parseInt(textContent.substring(textContent.indexOf("(") + 1, textContent.indexOf(")")));
+        value = "=" + Math.log(y) / Math.log(b);
+      }
+      if (textContent.indexOf("e") != -1) {
+        var x = parseFloat(textContent.substring(textContent.indexOf("{") + 1, textContent.indexOf("}")));
+        value = "=" + Math.exp(x);
+      }
+      if (textContent.indexOf("sqrt") != -1) {
+        var n = parseInt(textContent.substring(textContent.indexOf("[") + 1, textContent.indexOf("]")));
+        var root = parseInt(textContent.substring(textContent.indexOf("{") + 1, textContent.indexOf("}")));
+        value = "=" + NthRoot(root, n, 10);
+      }
+      if (textContent.indexOf("ln") != -1) {
+        var x = parseFloat(textContent.substring(textContent.indexOf("(") + 1, textContent.indexOf(")")));
+        value = "=" + Math.log(x);
+      }
+      followCursor.init(value);
+      document.body.onmousemove = followCursor.run;
+    }
+    var followCursor = (function () {
+      var divElement = document.createElement("DIV");
+      divElement.style.position = 'absolute';
+      divElement.style.margin = '0';
+      divElement.style.padding = '0px';
+      divElement.style.border = '1px solid black';
+      divElement.style.background = 'rgba(255,255,255,1)';
+      divElement.setAttribute("id", "tooltipElement");
+      return {
+        init: function () {
+          var divElement2 = document.createElement("DIV");
+          divElement2.setAttribute("style", "font-style: italic; font-family: Times News Roman; font-size: 12px;");
+          divElement2.setAttribute("id", "tooltipElement2");
+          appendText = document.createTextNode(value);
+          divElement2.appendChild(appendText);
+          divElement.appendChild(divElement2);
+          document.body.appendChild(divElement);
+        },
+        run: function (e) {
+          var e = e || window.event;
+          var winWidth = window.innerWidth;
+          if (e.clientX > winWidth - 130) {
+            divElement.style.position = 'fixed';
+            //divElement.style.left = (e.clientX) + 'px';
+            divElement.style.top = (e.clientY - 30) + 'px';
+          } else {
+            divElement.style.left = (e.clientX + 10) + 'px';
+            divElement.style.top = (e.clientY - 10) + 'px';
+          }
+          getMouseCoords(e);
+        }
+      };
+    }());
+    function getMouseCoords(e) {
+      var e = e || window.event;
+    }
+    function mouseout() {
+      var bodyElement = document.getElementById("bodyElement");
+      var tooltipElement2 = document.getElementById("tooltipElement2");
+      tooltipElement2.removeChild(appendText);
+      var tooltipElement = document.getElementById("tooltipElement");
+      tooltipElement.removeChild(tooltipElement2);
+      bodyElement.removeChild(tooltipElement);
+    }
+
+
+    /**MATH CALENDAR FUNCTIONS****************************************************/
+    /**ROUNDING METHOD**********************************************************/
+    var myNameSpace = {};
+    myNameSpace.round = function (number, precision) {
+      var factor = Math.pow(10, precision);
+      //console.log("factor: "+factor);
+      var tempNumber = number * factor;
+      //console.log("temNumber: "+tempNumber);
+      var roundedTempNumber = Math.round(tempNumber);
+      //console.log("roundedTempNumber: "+roundedTempNumber);
+      return roundedTempNumber / factor;
+    };
+
+    myNameSpace.floor = function (number, precision) {
+      var factor = Math.pow(10, precision);
+      //console.log("factor: "+factor);
+      var tempNumber = number * factor;
+      //console.log("temNumber: "+tempNumber);
+      var roundedTempNumber = Math.floor(tempNumber);
+      //console.log("roundedTempNumber: "+roundedTempNumber);
+      return roundedTempNumber / factor;
+    }
+
+    /**NTH ROOT******************************************************************/
+
+    function nthrootcal() {
+      var r;
+      switch (plusNum) {
+        case 0.000001:
+          date = (mm + 1.0) + day / 100.0 + yyyy * plusNum;
+          r = 6;
+          break;
+        case 0.01:
+          date = (mm + 1.0) + day / 100.0;
+          r = 2;
+          break;
+        case 0.0001:
+          yyyyStr = yyyy.toString();
+          date = (mm + 1.0) + day / 100.0 + parseInt(yyyyStr.substring(2, 4)) * plusNum;
+          r = 4;
+          break;
+      }
+      date = myNameSpace.round(date, 6);
+      var n = 2.0;
+      var root = 0.0;
+      while (true) {
+        root = Math.ceil(Math.pow(date, n));
+        if (date == NthRoot(root, n, r)) {
+          break;
+        }
+        n++;
+      }
+      display = "$\\sqrt[" + n + "]{" + root + "}$";
+      n = 2.0;
+    }
+
+    function NthRoot(x, n, o) {
+      var determineRange = 2.0;
+      while (Math.pow(determineRange, n) < x) {
+        determineRange++;
+      }
+      var root = determineRange - 1.0;
+      var decimal = 1;
+      for (var i = 1; i <= o; i++) {
+        decimal /= 10;
+        while (Math.pow(root, n) < x) {
+          root = myNameSpace.round(root + decimal, o);
+        }
+        root = myNameSpace.round(root - decimal, o);
+      }
+      return root;
+    }
+
+    /**FRACTIONS**************************************************************/
+
+    function fraccal() {
+      switch (plusNum) {
+        case 0.000001:
+          date = (mm + 1.0) + day / 100.0 + yyyy * plusNum;
+          break;
+        case 0.01:
+          date = (mm + 1.0) + day / 100.0;
+          break;
+        case 0.0001:
+          yyyyStr = yyyy.toString();
+          date = (mm + 1.0) + day / 100.0 + parseInt(yyyyStr.substring(2, 4)) * plusNum;
+          break;
+      }
+      date = myNameSpace.round(date, 6);
+      var x = 0.0;
+      var y = 4.0;
+      var fraction = 0.0;
+      for (y = 4.0; ; y++) {
+        x = Math.ceil(y * date);
+        fraction = x / y;
+        if (fraction > date && fraction < (date + plusNum)) {
+          display = "$\\frac{" + x + "}{" + y + "}$";
+          break;
+        }
+      }
+    }
+
+    /**SINE AND CONSINE FUNCTIONS***********************************************************/
+
+    function sincal(k) {
+      switch (plusNum) {
+        case 0.000001:
+          date = (mm + 1.0) + day / 100.0 + yyyy * plusNum;
+          break;
+        case 0.01:
+          date = (mm + 1.0) + day / 100.0;
+          break;
+        case 0.0001:
+          yyyyStr = yyyy.toString();
+          date = (mm + 1.0) + day / 100.0 + parseInt(yyyyStr.substring(2, 4)) * plusNum;
+          break;
+      }
+      date = myNameSpace.round(date, 6);
+      var x = 1.0;
+      var y = 2.0;
+      var realx = x;
+      var realy = y;
+      var smallestlength = 0;
+      var addnum = 1.0;
+
+      while (x >= 1) {
+        while (y * sin(x) <= date && x <= 90.0) {
+          //var z = y*sin(x);
+          x += addnum;
+        }
+        if (y * sin(x) > date && y * sin(x) < date + plusNum) {
+          x = myNameSpace.round(x, 10);
+          if (smallestlength == 0) {
+            smallestlength = x.toString().length;
+            //console.log("smallestlength: "+smallestlength);
+            realx = x;
+            realy = y;
+          }
+          if (x.toString().length < smallestlength) {
+            smallestlength = x.toString().length;
+            realx = x;
+            realy = y;
+          }
+          x = 91;
+        }
+        if (x >= 91) {
+          y++;
+          x = 1.0;
+          addnum = 1.0;
+        } else {
+          x -= addnum;
+          addnum /= 10;
+        }
+      }
+      if (k == true) {	//True means sin
+        display = "$\\ " + realy + "sin(" + realx + ")$";
+      } else {	//False means cosine
+        realx = myNameSpace.round(90 - realx, 10);
+        display = "$\\ " + realy + "cos(" + realx + ")$";
+      }
+    }
+
+    function sin(a) {
+      var x = a / 180 * Math.PI;
+      var y = x;
+      var isPositive = false;
+      for (var i = 3; i <= 11; i += 2) {
+        if (isPositive == false) {
+          y -= Math.pow(x, i) / factorial(i);
+          isPositive = true;
+        } else {
+          y += Math.pow(x, i) / factorial(i);
+          isPositive = false;
+        }
+      }
+      y = myNameSpace.round(y, 10);
+      //console.log("y: "+y);
+      return y;
+    }
+
+    function factorial(n) {
+      var a = 1;
+      for (var i = 1; i <= n; i++) {
+        a *= i;
+      }
+      return a;
+    }
+
+    /**TANGENT FUNCTION***************************************************************************/
+
+    function tancal() {
+      switch (plusNum) {
+        case 0.000001:
+          date = (mm + 1.0) + day / 100.0 + yyyy * plusNum;
+          break;
+        case 0.01:
+          date = (mm + 1.0) + day / 100.0;
+          break;
+        case 0.0001:
+          yyyyStr = yyyy.toString();
+          date = (mm + 1.0) + day / 100.0 + parseInt(yyyyStr.substring(2, 4)) * plusNum;
+          break;
+      }
+      date = myNameSpace.round(date, 6);
+      var x = 1.0;
+      var y = 2.0;
+      var realx = x;
+      var realy = y;
+      var smallestlength = 0;
+      var addnum = 1.0;
+
+      while (x >= 1) {
+        while (y * tan(x) <= date && x <= 90.0) {
+          //var z = y*sin(x);
+          x += addnum;
+        }
+        if (y * tan(x) > date && y * tan(x) < date + plusNum) {
+          x = myNameSpace.round(x, 10);
+          if (smallestlength == 0) {
+            smallestlength = x.toString().length;
+            //console.log("smallestlength: "+smallestlength);
+            realx = x;
+            realy = y;
+          }
+          if (x.toString().length < smallestlength) {
+            smallestlength = x.toString().length;
+            realx = x;
+            realy = y;
+          }
+          x = 91;
+        }
+        if (x >= 91) {
+          y++;
+          x = 1.0;
+          addnum = 1.0;
+        } else {
+          x -= addnum;
+          addnum /= 10;
+        }
+      }
+      display = "$\\ " + realy + "tan(" + realx + ")$";
+    }
+
+    function tan(a) {
+      var x = a / 180 * Math.PI;
+      var y = x;
+      var isPositive = false;
+      for (var i = 3; i <= 11; i += 2) {
+        if (isPositive == false) {
+          y -= Math.pow(x, i) / factorial(i);
+          isPositive = true;
+        } else {
+          y += Math.pow(x, i) / factorial(i);
+          isPositive = false;
+        }
+      }
+      y = myNameSpace.round(y, 10);
+      var z = myNameSpace.round(y / Math.sqrt(1 - Math.pow(y, 2)), 10);
+      return z;
+    }
+
+    /**LOGARITHUM FUNCTION****************************************************************************/
+
+    function logcal() {
+      switch (plusNum) {
+        case 0.000001:
+          date = (mm + 1.0) + day / 100.0 + yyyy * plusNum;
+          break;
+        case 0.01:
+          date = (mm + 1.0) + day / 100.0;
+          break;
+        case 0.0001:
+          yyyyStr = yyyy.toString();
+          date = (mm + 1.0) + day / 100.0 + parseInt(yyyyStr.substring(2, 4)) * plusNum;
+          break;
+      }
+      date = myNameSpace.round(date, 6);
+      var dateint = Math.floor(date);
+      var num = 0.0;
+      var y = 0.0;
+      var b = 0.0;
+      for (b = 2.0; ; b++) {
+        for (y = Math.pow(b, dateint); num < date; y++) {
+          num = Math.log(y) / Math.log(b);
+          num = myNameSpace.round(num, 10);
+        }
+
+        if (num > date && num < date + plusNum) {
+          display = "$\\ log_{" + b + "} (" + (y - 1) + ")$";
+          break;
+        }
+        num = 0.0;
+      }
+    }
+
+    /**e CALENDAR**************************************************************************************/
+
+    function ecal() {
+      switch (plusNum) {
+        case 0.000001:
+          date = (mm + 1.0) + day / 100.0 + yyyy * plusNum;
+          break;
+        case 0.01:
+          date = (mm + 1.0) + day / 100.0;
+          break;
+        case 0.0001:
+          yyyyStr = yyyy.toString();
+          date = (mm + 1.0) + day / 100.0 + parseInt(yyyyStr.substring(2, 4)) * plusNum;
+          break;
+      }
+      date = myNameSpace.round(date, 6);
+      var addnum = 0.1;
+      var x = 0.0;
+      var num = 0.0;
+      var x2 = Math.log(date);
+      for (var i = 1; ; i++) {
+        x = myNameSpace.floor(x2, i);
+        x += addnum;
+        x = myNameSpace.round(x, 10);
+        num = Math.exp(x);
+        //console.log("x: "+x+" num: "+num);
+        if (num >= date && num < date + plusNum) {
+          display = "$\\ e^{" + x + "}$";
+          //console.log("num: "+num);
+          break;
+        }
+        addnum /= 10;
+      }
+    }
+
+    /**ln CALENDAR****************************************************************************************/
+
+    function lncal() {
+      switch (plusNum) {
+        case 0.000001:
+          date = (mm + 1.0) + day / 100.0 + yyyy * plusNum;
+          break;
+        case 0.01:
+          date = (mm + 1.0) + day / 100.0;
+          break;
+        case 0.0001:
+          yyyyStr = yyyy.toString();
+          date = (mm + 1.0) + day / 100.0 + parseInt(yyyyStr.substring(2, 4)) * plusNum;
+          break;
+      }
+      date = myNameSpace.round(date, 6);
+      var addnum = 0.1;
+      var x = 0.0;
+      var num = 0.0;
+      var x2 = Math.exp(date);
+      for (var i = 1; ; i++) {
+        x = myNameSpace.floor(x2, i);
+        x += addnum;
+        x = myNameSpace.round(x, 10);
+        num = Math.log(x);
+        if (num >= date && num < date + plusNum) {
+          display = "$\\ ln(" + x + ")$";
+          break;
+        }
+        addnum /= 10;
+      }
+    }
+  </script>
+  <script type="text/x-mathjax-config">
+  		MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+	</script>
+  <script type="text/javascript" async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML">
+  </script>
+  <style>
+    table,
+    th,
+    td {
+      border: 1px solid black;
+      border-collapse: collapse;
+      margiin: 0px;
+      font-size: 12.9px;
+    }
+
+    p {
+      margin: 0;
+      padding: 0;
+    }
+
+    .test {
+      height: 100px;
+    }
+
+    .container {
+      clear: both;
+    }
+
+    .container .label-info {
+      float: right;
+    }
+
+    .container label {
+      float: left;
+    }
+  </style>
+  <title>Math Calendar</title>
+</head>
+
+<body id="bodyElement">
+  <div class="container" id="container">
+    <script>visNMBtn();</script>
+    <button onclick="todayButton()" style="float:right;width:60px;height:30px;margin-right:20px">Today</button>
+    <select id="formatMenu" onchange="formatSelected(this)" style="float:right; margin-right: 20px; margin-top: 5px">
+      <option id="mm.ddyyyy">mm.ddyyyy</option>
+      <option id="mm.dd">mm.dd</option>
+      <option id="mm.ddyy">mm.ddyy</option>
+    </select>
+    <script>selectFormat();</script>
+    <label id="label">
+      <script>visLMBtn();</script></label>
+  </div>
+  <div style="text-align:center; margin-left: 200px">
+    <select id="monthMenu" style="margin:0px auto">
+      <option id="1">January</option>
+      <option id="2">February</option>
+      <option id="3">March</option>
+      <option id="4">April</option>
+      <option id="5">May</option>
+      <option id="6">June</option>
+      <option id="7">July</option>
+      <option id="8">August</option>
+      <option id="9">September</option>
+      <option id="10">October</option>
+      <option id="11">November</option>
+      <option id="12">December</option>
+    </select>
+    <select id="yearMenu">
+    </select>
+    <button onclick="fastTravel()">Go</button>
+    <script>makeMenuYear();</script>
+  </div>
+  <script>createTable();</script>
+</body>
+
+</html>
